@@ -1,5 +1,8 @@
 {
-  "name": "Copy of Tempo: The 86400 Countdown",
+  "name": "Tempo: The 86400 Countdown",
   "description": "A minimalist Always-On Display clock that visualizes your day as a countdown of 86,400 seconds. Features a built-in to-do list and smart productivity insights.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }

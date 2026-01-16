@@ -12,14 +12,13 @@ const App: React.FC = () => {
   });
   const [newTodo, setNewTodo] = useState('');
   const [newPriority, setNewPriority] = useState<Priority>('medium');
-  const [insight, setInsight] = useState<AIInsight | null>(() => {
+  const [insight, setInsight] = useState<(AIInsight & { source: string }) | null>(() => {
     const saved = localStorage.getItem('tempo_last_insight');
-    return saved ? JSON.parse(saved) : null;
+    return saved ? { ...JSON.parse(saved), source: 'cache' } : null;
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [wakeLockActive, setWakeLockActive] = useState(false);
-  const [wakeLockError, setWakeLockError] = useState<string | null>(null);
   const [dateTime, setDateTime] = useState({ day: '', date: '' });
   const [battery, setBattery] = useState<{ level: number; charging: boolean } | null>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -32,11 +31,9 @@ const App: React.FC = () => {
         // @ts-ignore
         wakeLockRef.current = await navigator.wakeLock.request('screen');
         setWakeLockActive(true);
-        setWakeLockError(null);
         wakeLockRef.current.addEventListener('release', () => setWakeLockActive(false));
-      } catch (err: any) {
+      } catch (err) {
         setWakeLockActive(false);
-        if (err.name === 'NotAllowedError') setWakeLockError("Wake Lock Restricted.");
       }
     }
   }, []);
@@ -108,8 +105,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (hasStarted) {
       fetchInsight();
-      // Fetch every hour instead of 30 mins to conserve quota
-      const interval = setInterval(fetchInsight, 3600000);
+      const interval = setInterval(fetchInsight, 3600000); // 1 hour fetch
       return () => clearInterval(interval);
     }
   }, [hasStarted, fetchInsight]);
@@ -132,12 +128,12 @@ const App: React.FC = () => {
   if (!hasStarted) {
     return (
       <div onClick={startAOD} className="h-screen w-full bg-black flex flex-col items-center justify-center cursor-pointer p-6">
-        <div className="text-zinc-500 animate-pulse mb-4 tracking-[0.3em] text-[10px] uppercase font-bold">TEMPO PWA READY</div>
+        <div className="text-zinc-500 animate-pulse mb-4 tracking-[0.3em] text-[10px] uppercase font-bold">TEMPO PWA v2</div>
         <div className="mono text-7xl text-white font-bold mb-4">{secondsRemaining}</div>
         <div className="bg-white/5 border border-white/10 px-8 py-5 rounded-2xl text-center max-w-xs transition-all hover:bg-white/10 active:scale-95 shadow-2xl">
-          <p className="text-zinc-300 text-sm font-semibold">Initialize Clock</p>
+          <p className="text-zinc-300 text-sm font-semibold">Initialize Immersive Clock</p>
           <p className="text-zinc-600 text-[9px] mt-2 leading-relaxed tracking-wider uppercase font-bold">
-            Stay Awake • Immersive Mode • Intention Tracking
+            Stay Awake • Offline Support • Stoic Insights
           </p>
         </div>
       </div>
@@ -166,16 +162,23 @@ const App: React.FC = () => {
           </div>
           
           <div className="relative inline-block px-4">
-            <h1 className="mono text-[20vw] md:text-[13rem] font-bold tracking-tighter leading-none text-white drop-shadow-2xl">
+            <h1 className="mono text-[22vw] md:text-[14rem] font-bold tracking-tighter leading-none text-white drop-shadow-2xl transition-all">
               {secondsRemaining}
             </h1>
           </div>
 
           <div className="flex flex-col items-center gap-3 mt-10">
-            <p className="text-zinc-800 font-black tracking-[0.3em] uppercase text-[9px]">Remaining Daily Capacity</p>
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all duration-700 ${wakeLockActive ? 'border-green-500/20 bg-green-500/5 text-green-500' : 'border-zinc-900 text-zinc-800'}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${wakeLockActive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-zinc-900'}`}></div>
-              <span className="text-[10px] font-black uppercase tracking-widest">{wakeLockActive ? 'Always-On active' : 'Sleep-Safe mode'}</span>
+            <p className="text-zinc-800 font-black tracking-[0.3em] uppercase text-[9px]">Seconds Available</p>
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all duration-700 ${wakeLockActive ? 'border-green-500/20 bg-green-500/5 text-green-500' : 'border-zinc-900 text-zinc-800'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${wakeLockActive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-zinc-900'}`}></div>
+                <span className="text-[10px] font-black uppercase tracking-widest">{wakeLockActive ? 'Stay Awake active' : 'Sleep-Safe mode'}</span>
+              </div>
+              {insight && (
+                <div className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded border ${insight.source === 'api' ? 'border-blue-900/30 text-blue-500' : 'border-zinc-900 text-zinc-700'}`}>
+                  {insight.source}
+                </div>
+              )}
             </div>
           </div>
 
@@ -222,7 +225,7 @@ const App: React.FC = () => {
               type="text" 
               value={newTodo}
               onChange={(e) => setNewTodo(e.target.value)}
-              placeholder="What must happen?"
+              placeholder="Next milestone?"
               className="w-full bg-white/[0.03] border border-white/5 rounded-3xl py-5 px-6 text-sm focus:outline-none focus:border-white/10 transition-all text-white placeholder:text-zinc-800 font-medium"
             />
             <div className="flex gap-2 p-1.5 bg-white/[0.02] rounded-3xl border border-white/5">
@@ -242,6 +245,11 @@ const App: React.FC = () => {
           </form>
 
           <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-none pb-32">
+            {todos.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-48 opacity-20">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Zero Intentions set</p>
+              </div>
+            )}
             {sortedTodos.map(todo => (
               <div 
                 key={todo.id}
@@ -261,7 +269,7 @@ const App: React.FC = () => {
                   <div className={`text-sm font-semibold truncate ${todo.completed ? 'text-zinc-600 line-through' : 'text-zinc-300'}`}>{todo.text}</div>
                   <div className="flex items-center gap-2 mt-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${todo.completed ? 'bg-zinc-900' : todo.priority === 'high' ? 'bg-red-900' : todo.priority === 'medium' ? 'bg-amber-900' : 'bg-zinc-800'}`}></div>
-                    <span className="text-[9px] uppercase font-black text-zinc-800">{todo.priority} level</span>
+                    <span className="text-[9px] uppercase font-black text-zinc-800">{todo.priority} priority</span>
                   </div>
                 </div>
                 <button onClick={() => setTodos(todos.filter(t => t.id !== todo.id))} className="opacity-0 group-hover:opacity-100 p-2 text-zinc-900 hover:text-red-950 transition-all">
