@@ -1,0 +1,19 @@
+
+{
+  "name": "Tempo: 86400 Seconds",
+  "short_name": "Tempo",
+  "description": "A minimalist countdown clock and intention tracker.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ffffff'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='white' stroke-width='8'/%3E%3Cpath d='M50 20 V50 L70 70' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
