@@ -38,6 +38,15 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const getBatteryMessage = (level: number, charging: boolean) => {
+    if (charging) return "ENERGY_SYNCING";
+    if (level >= 90) return "MAX_POTENTIAL";
+    if (level >= 60) return "STABLE_FLOW";
+    if (level >= 30) return "DIMINISHING";
+    if (level >= 15) return "LOW_RESERVE";
+    return "DEPLETED_STATE";
+  };
+
   const startAOD = async () => {
     setHasStarted(true);
     try {
@@ -149,14 +158,21 @@ const App: React.FC = () => {
         style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
       >
         <div className="text-center z-10">
-          <div className="flex items-center justify-center gap-4 mb-6">
+          <div className="flex items-center justify-center gap-6 mb-6">
             <p className="text-zinc-600 font-bold tracking-[0.5em] text-[9px] uppercase">
               {dateTime.day} • {dateTime.date}
             </p>
             {battery && (
-              <div className="flex items-center gap-1.5 text-zinc-700 text-[10px] font-black">
-                <span className={battery.level < 20 ? 'text-red-900' : ''}>{battery.level}%</span>
-                {battery.charging && <span className="text-green-900 animate-pulse">⚡</span>}
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                   <span className={`text-[10px] font-black uppercase tracking-widest ${battery.level < 20 ? 'text-red-900' : 'text-zinc-700'}`}>
+                    {getBatteryMessage(battery.level, battery.charging)}
+                   </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-black border-l border-zinc-900 pl-3">
+                  <span className={battery.level < 20 ? 'text-red-900' : ''}>{battery.level}%</span>
+                  {battery.charging && <span className="text-green-900 animate-pulse">⚡</span>}
+                </div>
               </div>
             )}
           </div>
@@ -280,13 +296,9 @@ const App: React.FC = () => {
           </div>
 
           <div className="mt-auto pt-10 border-t border-white/5">
-             <div className="flex justify-between items-end mb-4 px-2">
-               <span className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">Momentum</span>
-               <span className="text-xs font-mono text-zinc-500 font-bold">{todos.length > 0 ? Math.round((todos.filter(t => t.completed).length / todos.length) * 100) : 0}%</span>
-             </div>
-            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-zinc-800 transition-all duration-1000" 
+                className="h-full bg-zinc-700 transition-all duration-1000" 
                 style={{ width: `${todos.length > 0 ? (todos.filter(t => t.completed).length / todos.length) * 100 : 0}%` }}
               ></div>
             </div>
